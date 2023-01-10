@@ -1,13 +1,22 @@
-import { useState } from 'react'
+import { differenceInSeconds } from 'date-fns'
+import { useContext, useEffect, useState } from 'react'
+import { CyclesContext } from '../..'
 import { CountdownContainer, TwoDotsSeparator } from './styles'
 
-interface CountdownProps {
-  activeCycle: any
-}
+export function Countdown() {
+  const { activeCycle, activeCycleId, markCurrentCycleAsFinished } =
+    useContext(CyclesContext)
 
-export function Countdown({ activeCycle }: CountdownProps) {
   const [amountSecondsPassed, setAmountSecondsPassed] = useState(0)
+
   const secondsOfCycle = activeCycle ? activeCycle.minutesAmount * 60 : 0
+  const currentSeconds = activeCycle ? secondsOfCycle - amountSecondsPassed : 0
+
+  const minutesAmount = Math.floor(currentSeconds / 60)
+  const secondsAmount = currentSeconds % 60
+
+  const minutes = String(minutesAmount).padStart(2, '0')
+  const seconds = String(secondsAmount).padStart(2, '0')
 
   useEffect(() => {
     let interval: number
@@ -20,16 +29,8 @@ export function Countdown({ activeCycle }: CountdownProps) {
         )
 
         if (secondsDifference >= secondsOfCycle) {
-          setCycles((prev) =>
-            prev.map((cycle) => {
-              if (cycle.id === activeCycleId) {
-                return { ...cycle, finishedDate: new Date() }
-              } else return cycle
-            }),
-          )
-
+          markCurrentCycleAsFinished()
           setAmountSecondsPassed(secondsOfCycle)
-
           clearInterval(interval)
         } else setAmountSecondsPassed(secondsDifference)
       }, 1000)
@@ -38,7 +39,11 @@ export function Countdown({ activeCycle }: CountdownProps) {
     return () => {
       clearInterval(interval)
     }
-  }, [activeCycle, secondsOfCycle, activeCycleId])
+  }, [activeCycle, secondsOfCycle, activeCycleId, markCurrentCycleAsFinished])
+
+  useEffect(() => {
+    if (activeCycle) document.title = `${minutes}:${seconds}`
+  }, [minutes, seconds, activeCycle])
 
   return (
     <CountdownContainer>
@@ -49,15 +54,4 @@ export function Countdown({ activeCycle }: CountdownProps) {
       <span>{seconds[1]}</span>
     </CountdownContainer>
   )
-}
-function useEffect(arg0: () => () => void, arg1: any[]) {
-  throw new Error('Function not implemented.')
-}
-
-function differenceInSeconds(arg0: Date, startDate: any) {
-  throw new Error('Function not implemented.')
-}
-
-function setCycles(arg0: (prev: any) => any) {
-  throw new Error('Function not implemented.')
 }
